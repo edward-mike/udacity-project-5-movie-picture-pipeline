@@ -1,0 +1,69 @@
+name: Backend Continuous Integration
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  Linting:
+    runs-on: ubuntu-latest
+    environment: Devlopmnet Environment
+
+    steps:
+    - name: Check the Repository
+      uses: actions/checkout@v3
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Install Dependencies
+      working-directory: starter/backend 
+      run:  |
+        python -m pip install --upgrade pip
+        pip install pipenv
+        pip install flake8
+
+    - name: Checkout Run Lint
+      run: cd starter/backend && pipenv run lint
+
+  Test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check the Repository
+      uses: actions/checkout@v3
+
+    - name: Use Python 3
+      uses:  actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Install Dependencies
+      working-directory: starter/backend 
+      run:  |
+        python -m pip install --upgrade pip
+        pip install pipenv
+        pip install flake8
+
+    - name: Test
+      run: cd starter/backend && pipenv install pytest && pipenv run test
+
+      
+  Build:
+    needs: [Linting, Test]
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Check the Repository
+      uses: actions/checkout@v3
+
+    - name: Build Docker Image
+      run: |
+        cd starter/backend
+        docker build --tag mp-backend:latest .
+
+
