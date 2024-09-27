@@ -1,6 +1,7 @@
 ####################
 # VPC Configuration
 ####################
+
 # Create a VPC
 resource "aws_vpc" "vpc" {
   tags = {

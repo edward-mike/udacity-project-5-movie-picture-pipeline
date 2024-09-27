@@ -89,10 +89,11 @@ jobs:
       env:
         IMAGE_TAG: latest
         REPO_NAME: frontend
+        AWS_ACCOUNT_ID: 058264144724
       # Pushes docker image to AWS ECR
       run: |
-        docker build --build-arg=REACT_APP_MOVIE_API_URL=http://localhost:5000 --tag 058264144724.dkr.ecr.us-east-1.amazonaws.com/$REPO_NAME:$IMAGE_TAG .
-        docker push 058264144724.dkr.ecr.us-east-1.amazonaws.com/$REPO_NAME:$IMAGE_TAG 
+        docker build --build-arg=REACT_APP_MOVIE_API_URL=http://localhost:5000 --tag ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/$REPO_NAME:$IMAGE_TAG .
+        docker push ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/$REPO_NAME:$IMAGE_TAG 
     
 
     - name: Configure Kubeconfig
@@ -106,6 +107,7 @@ jobs:
       env:
         IMAGE_TAG: latest
         REPO_NAME: frontend
+        AWS_ACCOUNT_ID: 058264144724
       run: |
-          kustomize edit set image frontend=058264144724.dkr.ecr.us-east-1.amazonaws.com/$REPO_NAME:$IMAGE_TAG
+          kustomize edit set image frontend=${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/$REPO_NAME:$IMAGE_TAG
           kustomize build | kubectl apply -f -
