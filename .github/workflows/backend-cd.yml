@@ -6,6 +6,12 @@ on:
     branches:
       - master
 
+env:
+  IMAGE_TAG: latest
+  REPO_NAME: backend
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+
+  
 jobs:
   Linting:
     runs-on: ubuntu-latest
@@ -78,12 +84,9 @@ jobs:
 
     - name: 🐳☁️Build and Push Docker Image
       working-directory: starter/backend
-      env:
-        IMAGE_TAG: latest
-        REPO_NAME: backend
       run: |
-        docker build --build-arg=REACT_APP_MOVIE_API_URL=http://localhost:5000 --tag 058264144724.dkr.ecr.us-east-1.amazonaws.com/$REPO_NAME:$IMAGE_TAG .
-        docker push 058264144724.dkr.ecr.us-east-1.amazonaws.com/$REPO_NAME:$IMAGE_TAG
+        docker build --build-arg=REACT_APP_MOVIE_API_URL=http://localhost:5000 --tag ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/$REPO_NAME:$IMAGE_TAG .
+        docker push ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/$REPO_NAME:$IMAGE_TAG
 
     - name: Update Kubeconfig
       run:
@@ -91,10 +94,6 @@ jobs:
 
     - name: 🐳☁️Deploy Docker Image to Amazon EKS 🚀
       working-directory: starter/backend/k8s
-      env:
-        IMAGE_TAG: latest
-        REPO_NAME: backend
-        AWS_ACCOUNT_ID: 058264144724
       run: |
         aws eks update-kubeconfig --name udacity-project4 --region us-east-1
         kustomize edit set image backend=${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/$REPO_NAME:$IMAGE_TAG

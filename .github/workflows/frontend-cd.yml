@@ -8,6 +8,13 @@ on:
     branches:
       - master
 
+
+env:
+  IMAGE_TAG: latest
+  REPO_NAME: frontend
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+
+
 jobs:
   Linting:
     runs-on: ubuntu-latest
@@ -31,6 +38,7 @@ jobs:
     - name: 🔍Run Lint
       run: cd starter/frontend && npm run lint
 
+      
   Test:
     runs-on: ubuntu-latest
 
@@ -51,7 +59,6 @@ jobs:
   
     - name: 🧪Run Test
       run: cd starter/frontend && npm run test
-
 
 
   Build:
@@ -77,37 +84,22 @@ jobs:
         aws-session-token: ${{secrets.AWS_SESSION_TOKEN}}
         aws-region: us-east-1
   
-
     - name: 🔓Login to Amazon 
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v2
 
-
-
     - name: 🐳 Build and Push Docker Image to AWS ECR ☁️
       working-directory: starter/frontend
-      env:
-        IMAGE_TAG: latest
-        REPO_NAME: frontend
-        AWS_ACCOUNT_ID: 058264144724
-      # Pushes docker image to AWS ECR
       run: |
         docker build --build-arg=REACT_APP_MOVIE_API_URL=http://localhost:5000 --tag ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/$REPO_NAME:$IMAGE_TAG .
         docker push ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/$REPO_NAME:$IMAGE_TAG 
     
-
     - name: Configure Kubeconfig
-    # configuration for kubernetes/EKS
       run:
        aws eks update-kubeconfig --name udacity-project4 --region us-east-1
 
-
     - name: 🚀Deploy Docker Image to Amazon EKS ☁️
       working-directory: starter/frontend/k8s
-      env:
-        IMAGE_TAG: latest
-        REPO_NAME: frontend
-        AWS_ACCOUNT_ID: 058264144724
       run: |
           kustomize edit set image frontend=${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/$REPO_NAME:$IMAGE_TAG
           kustomize build | kubectl apply -f -
