@@ -1,4 +1,4 @@
-name: Backend Continuous Integration
+name: 🔧🔄Backend Continuous Integration
 
 on:
   workflow_dispatch:
@@ -9,48 +9,49 @@ on:
 jobs:
   Linting:
     runs-on: ubuntu-latest
-    environment: Devlopmnet Environment
+    environment: Development Environment
 
     steps:
-    - name: Check the Repository
-      uses: actions/checkout@v3
+    - name: 📂Checkout branch 
+      uses: actions/checkout@v4
 
-    - name: Setup Python
-      uses: actions/setup-python@v4
+    - name: 🐍Setup Python
+      uses: actions/setup-python@v5
       with:
         python-version: "3.10"
 
-    - name: Install Dependencies
+    - name: 📦Install Dependencies
       working-directory: starter/backend 
       run:  |
         python -m pip install --upgrade pip
         pip install pipenv
         pip install flake8
 
-    - name: Checkout Run Lint
+    - name: 🔍Run Lint
       run: cd starter/backend && pipenv run lint
 
   Test:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Check the Repository
-      uses: actions/checkout@v3
+    - name: 📂Checkout branch 
+      uses: actions/checkout@v4
 
-    - name: Use Python 3
-      uses:  actions/setup-python@v4
+    - name: 🐍Setup Python
+      uses:  actions/setup-python@v5
       with:
         python-version: "3.10"
 
-    - name: Install Dependencies
+    - name: 📦Install Dependencies
       working-directory: starter/backend 
       run:  |
         python -m pip install --upgrade pip
         pip install pipenv
         pip install flake8
+        pipenv install pytest
 
-    - name: Test
-      run: cd starter/backend && pipenv install pytest && pipenv run test
+    - name: 🧪Run Test
+      run: cd starter/backend && pipenv run test
 
       
   Build:
@@ -58,12 +59,10 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Check the Repository
-      uses: actions/checkout@v3
+    - name: 📂Checkout branch 
+      uses: actions/checkout@v4
 
-    - name: Build Docker Image
+    - name: 🐳Build Docker Image
       run: |
         cd starter/backend
         docker build --tag mp-backend:latest .
-
-

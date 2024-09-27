@@ -1,4 +1,6 @@
-name: Frontend Continuous Deployment
+# https://github.com/marketplace/actions/configure-aws-credentials-action-for-github-actions
+
+name: 👨‍💻☁️Frontend Continuous Deployment
 
 on:
   workflow_dispatch:
@@ -9,45 +11,45 @@ on:
 jobs:
   Linting:
     runs-on: ubuntu-latest
-    environment: Devlopmnet Environment
+    environment: Development Environment
 
     steps:
-    - name: Check the Repository
-      uses: actions/checkout@v3
+    - name: 📂Checkout branch
+      uses: actions/checkout@v4
 
-    - name: Use Node.js 18
-      uses: actions/setup-node@v3
+    - name: 🚀Install Node.js 
+      uses: actions/setup-node@v4
       with:
-        node-version: 18
+        node-version: 18.x
         cache: 'npm'
         cache-dependency-path: starter/frontend/package-lock.json
 
-    - name: Install Dependencies
+    - name: 📦Install Dependencies
       working-directory: starter/frontend
       run: npm ci
 
-    - name: Checkout Run Lint
+    - name: 🔍Run Lint
       run: cd starter/frontend && npm run lint
 
   Test:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Check the Repository
-      uses: actions/checkout@v3
+    - name: 📂Checkout branch
+      uses: actions/checkout@v4
 
-    - name: Use Node.js 18
-      uses: actions/setup-node@v3
+    - name: 🚀Install Node.js
+      uses: actions/setup-node@v4
       with:
-        node-version: 18
+        node-version: 18.x
         cache: 'npm'
         cache-dependency-path: starter/frontend/package-lock.json
         
-    - name: Install Dependencies
+    - name: 📦Install Dependencies
       working-directory: starter/frontend
       run: npm ci
   
-    - name: Test
+    - name: 🧪Run Test
       run: cd starter/frontend && npm run test
 
 
@@ -57,18 +59,18 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Check the Repository
-      uses: actions/checkout@v3
+    - name: 📂Checkout branch
+      uses: actions/checkout@v4
     
-    - name: Use Node.js 18
-      uses: actions/setup-node@v3
+    - name: 🚀Install Node.js
+      uses: actions/setup-node@v4
       with:
-        node-version: 18
+        node-version: 18.x
         cache: 'npm'
         cache-dependency-path: starter/frontend/package-lock.json
 
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v2
+    - name: 🔑Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -76,32 +78,34 @@ jobs:
         aws-region: us-east-1
   
 
-    - name: Login to Amazon 
+    - name: 🔓Login to Amazon 
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v2
 
 
 
-    - name: Build and Push Docker Image
+    - name: 🐳 Build and Push Docker Image to AWS ECR ☁️
       working-directory: starter/frontend
       env:
         IMAGE_TAG: latest
         REPO_NAME: frontend
+      # Pushes docker image to AWS ECR
       run: |
-        docker build --build-arg=REACT_APP_MOVIE_API_URL=http://localhost:5000 --tag 669172573612.dkr.ecr.us-east-1.amazonaws.com/$REPO_NAME:$IMAGE_TAG .
-        docker push 669172573612.dkr.ecr.us-east-1.amazonaws.com/$REPO_NAME:$IMAGE_TAG
+        docker build --build-arg=REACT_APP_MOVIE_API_URL=http://localhost:5000 --tag 058264144724.dkr.ecr.us-east-1.amazonaws.com/$REPO_NAME:$IMAGE_TAG .
+        docker push 058264144724.dkr.ecr.us-east-1.amazonaws.com/$REPO_NAME:$IMAGE_TAG 
     
 
     - name: Configure Kubeconfig
+    # configuration for kubernetes/EKS
       run:
        aws eks update-kubeconfig --name udacity-project4 --region us-east-1
 
 
-    - name: Deploy Docker Image to Amazon EKS
+    - name: 🚀Deploy Docker Image to Amazon EKS ☁️
       working-directory: starter/frontend/k8s
       env:
         IMAGE_TAG: latest
         REPO_NAME: frontend
       run: |
-          kustomize edit set image frontend=669172573612.dkr.ecr.us-east-1.amazonaws.com/$REPO_NAME:$IMAGE_TAG
+          kustomize edit set image frontend=058264144724.dkr.ecr.us-east-1.amazonaws.com/$REPO_NAME:$IMAGE_TAG
           kustomize build | kubectl apply -f -
