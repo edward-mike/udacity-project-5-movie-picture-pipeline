@@ -10,7 +10,7 @@ env:
   IMAGE_TAG: latest
   REPO_NAME: backend
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-  EKS_CLUSTER : udacity-project4
+  EKS_CLUSTER : cluster
   AWS_REGION: us-east-1
   
 jobs:
