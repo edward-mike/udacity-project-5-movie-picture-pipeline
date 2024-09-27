@@ -13,6 +13,8 @@ env:
   IMAGE_TAG: latest
   REPO_NAME: frontend
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  EKS_CLUSTER : udacity-project4
+  AWS_REGION: us-east-1
 
 
 jobs:
@@ -91,15 +93,15 @@ jobs:
     - name: 🐳 Build and Push Docker Image to AWS ECR ☁️
       working-directory: starter/frontend
       run: |
-        docker build --build-arg=REACT_APP_MOVIE_API_URL=http://localhost:5000 --tag ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/$REPO_NAME:$IMAGE_TAG .
-        docker push ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/$REPO_NAME:$IMAGE_TAG 
+        docker build --build-arg=REACT_APP_MOVIE_API_URL=http://localhost:5000 --tag ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/$REPO_NAME:$IMAGE_TAG .
+        docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO_NAME}:${IMAGE_TAG}
     
     - name: Configure Kubeconfig
       run:
-       aws eks update-kubeconfig --name udacity-project4 --region us-east-1
+       aws eks update-kubeconfig --name ${EKS_CLUSTER} --region ${AWS_REGION}
 
     - name: 🚀Deploy Docker Image to Amazon EKS ☁️
       working-directory: starter/frontend/k8s
       run: |
-          kustomize edit set image frontend=${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/$REPO_NAME:$IMAGE_TAG
+          kustomize edit set image frontend=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO_NAME}:${IMAGE_TAG}
           kustomize build | kubectl apply -f -
