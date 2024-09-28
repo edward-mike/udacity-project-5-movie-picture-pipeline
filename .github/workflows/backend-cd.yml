@@ -1,100 +1,92 @@
-name: 🔧☁️Backend Continuous Deployment
+# GitHub Actions for Backend Continuous Deployment
+
+name: 🔧☁️ Backend Continuous Deployment
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # Allows manual triggering of the workflow
   pull_request:
     branches:
-      - master
+      - master  # Trigger on pull requests to the master branch
+    paths:
+      - 'starter/frontend/**'  # Trigger only if files in the frontend directory change
 
 env:
-  IMAGE_TAG: latest
   REPO_NAME: backend
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-  EKS_CLUSTER : cluster
+  EKS_CLUSTER: cluster
   AWS_REGION: us-east-1
-  
+
 jobs:
-  Linting:
+  Setup:
     runs-on: ubuntu-latest
     environment: Development Environment
 
     steps:
-    - name: 📂Checkout branch 
-      uses: actions/checkout@v4
+      - name: 📂 Checkout branch 
+        uses: actions/checkout@v4
 
-    - name: 🐍Setup Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: 3.10
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.10
 
-    - name: 📦Install Dependencies
-      working-directory: starter/backend 
-      run:  |
-        python -m pip install --upgrade pip
-        pip install pipenv
-        pip install flake8
+      - name: 📦 Install Dependencies
+        working-directory: starter/backend 
+        run:  |
+          python -m pip install --upgrade pip
+          pip install pipenv
+          pipenv install flake8 pytest  # Install both flake8 and pytest
 
-    - name: 🔍Run Lint
-      run: cd starter/backend && pipenv run lint
+  Linting:
+    runs-on: ubuntu-latest
+    needs: Setup  # Ensure setup job completes first
+
+    steps:
+      - name: 🔍 Run Lint
+        run: cd starter/backend && pipenv run flake8 .  
 
   Test:
     runs-on: ubuntu-latest
+    needs: Setup  # Ensure setup job completes first
 
     steps:
-    - name: 📂Checkout branch 
-      uses: actions/checkout@v4
+      - name: 🧪 Run Tests
+        run: cd starter/backend && pipenv run pytest  
 
-    - name: 🐍Setup Python
-      uses:  actions/setup-python@v5
-      with:
-        python-version: 3.10
-
-    - name: 📦Install Dependencies
-      working-directory: starter/backend 
-      run:  |
-        python -m pip install --upgrade pip
-        pip install pipenv
-        pip install flake8
-        pipenv install pytest
-
-    - name: 🧪Run Test
-      run: cd starter/backend && pipenv run test
-
-      
   Build:
-    needs: [Linting, Test]
     runs-on: ubuntu-latest
-    
+    needs: [Linting, Test]  # Runs only after linting and testing succeed
+
     steps:
-    - name: 📂Checkout branch 
-      uses: actions/checkout@v4
+      - name: 🔑 Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${AWS_REGION}
 
+      - name: 🔓 Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
+      - name: 🐳☁️ Build and Push Docker Image
+        working-directory: starter/backend
+        run: |
+          GIT_SHA=$(git rev-parse HEAD)  # Get the current Git SHA
+          docker build --build-arg=REACT_APP_MOVIE_API_URL=http://localhost:5000 --tag ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO_NAME}:${GIT_SHA} .
+          docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO_NAME}:${GIT_SHA}
 
-    - name: 🔑Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-1
-        
-    - name: 🔓Login to Amazon 
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v2
+  Deploy:
+    runs-on: ubuntu-latest
+    needs: Build  # Runs only after Build job succeeds
 
-    - name: 🐳☁️Build and Push Docker Image
-      working-directory: starter/backend
-      run: |
-        docker build --build-arg=REACT_APP_MOVIE_API_URL=http://localhost:5000 --tag ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO_NAME}:${IMAGE_TAG} .
-        docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO_NAME}:${IMAGE_TAG}
+    steps:
+      - name: Update Kubeconfig
+        run: aws eks update-kubeconfig --name ${EKS_CLUSTER} --region ${AWS_REGION}
 
-    - name: Update Kubeconfig
-      run:
-        aws eks update-kubeconfig --name ${EKS_CLUSTER} --region ${AWS_REGION}
-
-    - name: 🐳☁️Deploy Docker Image to Amazon EKS 🚀
-      working-directory: starter/backend/k8s
-      run: |
-        aws eks update-kubeconfig --name ${EKS_CLUSTER} --region ${AWS_REGION}
-        kustomize edit set image backend=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO_NAME}:${IMAGE_TAG}
-        kustomize build | kubectl apply -f -
+      - name: 🐳☁️ Deploy Docker Image to Amazon EKS 🚀
+        working-directory: starter/backend/k8s
+        run: |
+          GIT_SHA=$(git rev-parse HEAD)  # Get the current Git SHA
+          kustomize edit set image backend=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO_NAME}:${GIT_SHA}
+          kustomize build | kubectl apply -f -

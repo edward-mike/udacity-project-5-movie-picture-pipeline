@@ -1,15 +1,14 @@
-# https://github.com/marketplace/actions/checkout
-# https://github.com/marketplace/actions/checkout-node-project
+# GitHub Actions for Frontend Continuous Integration
 
-name: 👨‍💻🔄Frontend Continuous Integration 
+name: 👨‍💻🔄 Frontend Continuous Integration 
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # Allows manual triggering of the workflow
   pull_request:
     branches:
       - master
     paths:
-      - 'starter/frontend/**' # Trigger only if files in the frontend directory changes
+      - 'starter/frontend/**'  # Trigger only if files in the frontend directory change
 
 jobs:
   Setup:
@@ -28,7 +27,7 @@ jobs:
 
       - name: 📦 Install Project Dependencies
         working-directory: starter/frontend
-        run: npm ci
+        run: npm ci  # Clean install of project dependencies
 
   Linting:
     runs-on: ubuntu-latest
@@ -36,7 +35,7 @@ jobs:
 
     steps:
       - name: 🔍 Run Lint
-        run: npm run lint --prefix starter/frontend
+        run: npm run lint --prefix starter/frontend  # Run linting on the frontend directory
 
   UnitTests:
     runs-on: ubuntu-latest
@@ -44,7 +43,7 @@ jobs:
 
     steps:
       - name: 🧪 Run Tests
-        run: npm test --prefix starter/frontend
+        run: npm test --prefix starter/frontend  # Run unit tests in the frontend directory
 
   Build:
     runs-on: ubuntu-latest
@@ -58,12 +57,12 @@ jobs:
         uses: actions/cache@v3
         with:
           path: /tmp/.buildx-cache  # Cache path for Docker layers
-          key: ${{ runner.os }}-docker-${{ github.sha }}
+          key: ${{ runner.os }}-docker-${{ github.sha }}  # Unique cache key
           restore-keys: |
-            ${{ runner.os }}-docker-
+            ${{ runner.os }}-docker-  # Fallback to restore previous caches
 
       - name: 🐳 Build and Run Docker Image
         run: |
           cd starter/frontend
           docker build --build-arg=REACT_APP_MOVIE_API_URL=http://localhost:5000 --tag=mp-frontend:latest .
-          docker run --name mp-frontend -p 3000:3000 -d mp-frontend
+          docker run --name mp-frontend -p 3000:3000 -d mp-frontend 
