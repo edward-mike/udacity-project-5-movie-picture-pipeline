@@ -50,6 +50,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install pipenv
           pip install flake8
+          pipenv install flake8
 
       - name: 🔍 Run Lint
         run: cd starter/backend && pipenv run flake8 .  
@@ -73,9 +74,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install pipenv
           pip install flake8
+          pipenv install pytest
 
       - name: 🧪 Run Tests
-        run: pipenv run pytest 
+        run: cd starter/backend && pipenv run pytest 
 
   Build:
     runs-on: ubuntu-latest
