@@ -95,7 +95,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${AWS_REGION}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: 🔓 Login to Amazon ECR
         id: login-ecr
@@ -104,7 +104,7 @@ jobs:
       - name: 🐳☁️ Build and Push Docker Image
         working-directory: starter/backend
         run: |
-          GIT_SHA=$(git rev-parse HEAD)  # Get the current Git SHA
+          GIT_SHA=$(git rev-parse HEAD)  
           docker build --build-arg=REACT_APP_MOVIE_API_URL=http://localhost:5000 --tag ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO_NAME}:${GIT_SHA} .
           docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO_NAME}:${GIT_SHA}
 
@@ -119,6 +119,6 @@ jobs:
       - name: 🐳☁️ Deploy Docker Image to Amazon EKS 🚀
         working-directory: starter/backend/k8s
         run: |
-          GIT_SHA=$(git rev-parse HEAD)  # Get the current Git SHA
+          GIT_SHA=$(git rev-parse HEAD)  
           kustomize edit set image backend=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO_NAME}:${GIT_SHA}
           kustomize build | kubectl apply -f -

@@ -42,16 +42,44 @@ jobs:
     needs: Setup  # Ensure setup job completes first
 
     steps:
+      - name: 📂 Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: 🚀 Install Node.js and Dependencies
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18.x
+          cache: 'npm'
+          cache-dependency-path: starter/frontend/package-lock.json
+
+      - name: 📦 Install Project Dependencies
+        working-directory: starter/frontend
+        run: npm ci  # Clean install of project dependencies
+
       - name: 🔍 Run Lint
-        run: npm run lint --prefix starter/frontend
+        run: cd starter/frontend && npm run lint  # Run linting on the frontend directory
 
   Test:
     runs-on: ubuntu-latest
     needs: Setup  # Ensure setup job completes first
 
     steps:
+      - name: 📂 Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: 🚀 Install Node.js and Dependencies
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18.x
+          cache: 'npm'
+          cache-dependency-path: starter/frontend/package-lock.json
+
+      - name: 📦 Install Project Dependencies
+        working-directory: starter/frontend
+        run: npm ci  # Clean install of project dependencies
+
       - name: 🧪 Run Tests
-        run: npm test --prefix starter/frontend
+        run: cd starter/frontend && npm run test  # Run unit tests in the frontend directory
 
   Build:
     runs-on: ubuntu-latest
