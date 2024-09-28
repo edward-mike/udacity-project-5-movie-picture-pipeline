@@ -86,6 +86,16 @@ jobs:
     needs: [Linting, Test]  # Runs only after linting and testing succeed
 
     steps:
+      - name: 📂 Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: 🚀 Install Node.js and Dependencies
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18.x
+          cache: 'npm'
+          cache-dependency-path: starter/frontend/package-lock.json
+
       - name: 🔑 Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
