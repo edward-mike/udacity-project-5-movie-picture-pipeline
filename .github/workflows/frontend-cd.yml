@@ -100,8 +100,7 @@ jobs:
       - name: 🐳 Build and Push Docker Image to AWS ECR ☁️
         working-directory: starter/frontend
         run: |
-          docker build --build-arg=REACT_APP_MOVIE_API_URL=http://localhost:5000 \
-          --tag ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO_NAME}:${IMAGE_TAG} .
+          docker build --build-arg=REACT_APP_MOVIE_API_URL=http://localhost:5000 --tag ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO_NAME}:${IMAGE_TAG} .
           docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO_NAME}:${IMAGE_TAG}
 
       - name: Configure Kubeconfig
